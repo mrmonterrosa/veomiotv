@@ -598,8 +598,18 @@ export class Home implements OnInit, OnDestroy {
     this.applyPlayerMode();
   }
 
+  onNativePlayerError(event: any) {
+    console.error("Native Player Error:", event);
+    if (this.originalUrl) {
+      this.setupIframeFallback(this.originalUrl);
+    }
+  }
+
   onPlayerError(event: any) {
     console.error("Vime Player Error:", event);
+    if (this.originalUrl) {
+      this.setupIframeFallback(this.originalUrl);
+    }
   }
 
   toggleSidebar() {

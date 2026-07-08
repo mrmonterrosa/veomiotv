@@ -280,6 +280,7 @@
                     <!-- 3. ACTUAL PLAYER (NATIVE HLS/MP4) -->
                     <video #videoPlayer 
                            *ngIf="videoUrl && playerMode === 'native'"
+                           (error)="onNativePlayerError($event)"
                            controls 
                            autoplay 
                            playsinline 
