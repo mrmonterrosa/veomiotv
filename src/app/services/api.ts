@@ -92,7 +92,11 @@ export class Api {
     return response.json();
   }
 
-  getProxyStreamUrl(streamUrl: string) {
-    return `${this.baseUrl}/stream?url=${encodeURIComponent(streamUrl)}&token=${encodeURIComponent(this.getToken())}`;
+  getProxyStreamUrl(streamUrl: string, referer: string = '') {
+    let url = `${this.baseUrl}/stream?url=${encodeURIComponent(streamUrl)}&token=${encodeURIComponent(this.getToken())}`;
+    if (referer) {
+      url += `&referer=${encodeURIComponent(referer)}`;
+    }
+    return url;
   }
 }

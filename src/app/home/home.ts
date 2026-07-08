@@ -265,8 +265,11 @@ export class Home implements OnInit, OnDestroy {
             this.cdr.detectChanges();
           }
           
+          // Obtener el referer devuelto por la API o deducirlo basándose en la URL de origen
+          const referer = response.headers?.Referer || response.headers?.referer || (embedUrl.includes('roxiestreams') ? 'https://roxiestreams.su/' : 'https://gooz.aapmains.net/');
+          
           if (this.shouldProxy(response.url)) {
-            this.videoUrl = this.api.getProxyStreamUrl(response.url);
+            this.videoUrl = this.api.getProxyStreamUrl(response.url, referer);
           } else {
             this.videoUrl = response.url;
           }
@@ -290,7 +293,15 @@ export class Home implements OnInit, OnDestroy {
       // Para URLs HLS o directas, reproducimos utilizando el proxy si son HTTP o pertenecen a dominios protegidos para evitar CORS/Cierre de Referer
       if (embedUrl.includes('.m3u8') || embedUrl.includes('.m3u') || embedUrl.includes('.mp4') || embedUrl.includes('m3u')) {
         if (this.shouldProxy(embedUrl)) {
-          this.videoUrl = this.api.getProxyStreamUrl(embedUrl);
+          let referer = '';
+          if (this.selectedChannel?.isSport) {
+            if (embedUrl.includes('roxiestreams') || embedUrl.includes('paradilux') || embedUrl.includes('tedesco') || embedUrl.includes('formaturamaxi') || embedUrl.includes('shadow-ran') || this.selectedChannel?.source === 'RoxieStreams' || this.selectedChannel?.source === 'ROXIESTREAMS') {
+              referer = 'https://roxiestreams.su/';
+            } else if (embedUrl.includes('thetvapp') || embedUrl.includes('aapmains') || embedUrl.includes('hereisman') || this.selectedChannel?.source === 'TheTVApp' || this.selectedChannel?.source === 'THETVAPP') {
+              referer = 'https://gooz.aapmains.net/';
+            }
+          }
+          this.videoUrl = this.api.getProxyStreamUrl(embedUrl, referer);
         } else {
           this.videoUrl = embedUrl;
         }
