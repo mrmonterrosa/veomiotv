@@ -237,7 +237,7 @@ export class Home implements OnInit, OnDestroy {
     const protectedDomains = [
       'vimeos', 'goodstream', 'streamfort', 'streamwish', 'wishonly', 
       'hlswish', 'jwplayerhls', 'formaturamaxi', 'shadow-ran', 
-      'roxiestreams', 'aapmains', 'hereisman', 'thetvapp'
+      'roxiestreams', 'aapmains', 'hereisman', 'thetvapp', 'paradilux', 'tedesco'
     ];
     return protectedDomains.some(domain => lower.includes(domain));
   }
