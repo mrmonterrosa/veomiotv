@@ -294,12 +294,11 @@ export class Home implements OnInit, OnDestroy {
       if (embedUrl.includes('.m3u8') || embedUrl.includes('.m3u') || embedUrl.includes('.mp4') || embedUrl.includes('m3u')) {
         if (this.shouldProxy(embedUrl)) {
           let referer = '';
-          if (this.selectedChannel?.isSport) {
-            if (embedUrl.includes('roxiestreams') || embedUrl.includes('paradilux') || embedUrl.includes('tedesco') || embedUrl.includes('formaturamaxi') || embedUrl.includes('shadow-ran') || this.selectedChannel?.source === 'RoxieStreams' || this.selectedChannel?.source === 'ROXIESTREAMS') {
-              referer = 'https://roxiestreams.su/';
-            } else if (embedUrl.includes('thetvapp') || embedUrl.includes('aapmains') || embedUrl.includes('hereisman') || this.selectedChannel?.source === 'TheTVApp' || this.selectedChannel?.source === 'THETVAPP') {
-              referer = 'https://gooz.aapmains.net/';
-            }
+          const lowerUrl = embedUrl.toLowerCase();
+          if (lowerUrl.includes('roxiestreams') || lowerUrl.includes('paradilux') || lowerUrl.includes('tedesco') || lowerUrl.includes('formaturamaxi') || lowerUrl.includes('shadow-ran')) {
+            referer = 'https://roxiestreams.su/';
+          } else if (lowerUrl.includes('thetvapp') || lowerUrl.includes('aapmains') || lowerUrl.includes('hereisman')) {
+            referer = 'https://gooz.aapmains.net/';
           }
           this.videoUrl = this.api.getProxyStreamUrl(embedUrl, referer);
         } else {
@@ -324,7 +323,15 @@ export class Home implements OnInit, OnDestroy {
 
         let finalUrl = streamUrl;
         if (this.shouldProxy(streamUrl)) {
-          let proxyUrl = response.data.stream_proxy || this.api.getProxyStreamUrl(streamUrl);
+          let referer = '';
+          const lowerUrl = streamUrl.toLowerCase();
+          if (lowerUrl.includes('roxiestreams') || lowerUrl.includes('paradilux') || lowerUrl.includes('tedesco') || lowerUrl.includes('formaturamaxi') || lowerUrl.includes('shadow-ran')) {
+            referer = 'https://roxiestreams.su/';
+          } else if (lowerUrl.includes('thetvapp') || lowerUrl.includes('aapmains') || lowerUrl.includes('hereisman')) {
+            referer = 'https://gooz.aapmains.net/';
+          }
+          
+          let proxyUrl = response.data.stream_proxy || this.api.getProxyStreamUrl(streamUrl, referer);
           
           // Si la página es HTTPS, asegurar que la URL del proxy también lo sea
           const isHttpsPage = window.location.protocol === 'https:';
