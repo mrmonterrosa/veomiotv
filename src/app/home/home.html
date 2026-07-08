@@ -1,0 +1,366 @@
+<div class="relative w-full h-screen overflow-hidden bg-[#070d1f] text-on-surface font-sans flex">
+    
+    <!-- 1. AMBIENT GLOWS -->
+    <!-- Cyan glow top-left -->
+    <div class="absolute -left-[150px] -top-[150px] w-[500px] h-[500px] rounded-full pointer-events-none z-0 opacity-15"
+         style="background: radial-gradient(circle, #00daf3 0%, rgba(0, 218, 243, 0) 70%);">
+    </div>
+    
+    <!-- Purple/blue glow bottom-right -->
+    <div class="absolute -right-[150px] -bottom-[150px] w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-12"
+         style="background: radial-gradient(circle, #bdc2ff 0%, rgba(189, 194, 255, 0) 70%);">
+    </div>
+    
+    <!-- Blur overlay to diffuse the colors -->
+    <div class="absolute inset-0 pointer-events-none z-0 backdrop-blur-[40px] bg-black/25"></div>
+
+    <!-- 2. MAIN LAYOUT CONTAINER -->
+    <div class="relative z-10 w-full h-full flex flex-row overflow-hidden">
+        
+        <!-- SIDEBAR (LEFT) -->
+        <aside [class.w-0]="isSidebarCollapsed" 
+               [class.md:w-[320px]]="!isSidebarCollapsed" 
+               [class.w-[62vw]]="!isSidebarCollapsed"
+               class="h-full flex flex-col transition-all duration-300 ease-in-out clip bg-[#0d1224]/95 backdrop-blur-md border-r border-white/10 overflow-hidden relative">
+            
+            <!-- Header (VEOMIO TV) -->
+            <div class="flex items-center gap-2.5 px-5 pt-6 pb-4 flex-shrink-0 select-none">
+                <span class="material-symbols-outlined text-[#00daf3] text-[28px] font-fill-1" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+                <div class="flex items-baseline font-bold tracking-tight">
+                    <span class="text-white text-xl font-black tracking-normal">VEOMIO</span>
+                    <span class="text-[#00daf3] text-xl font-light ml-1">TV</span>
+                </div>
+            </div>
+
+            <!-- Pestañas (Tabs) -->
+            <div class="flex border-b border-white/10 px-4 pb-1 mb-2 flex-shrink-0 gap-2">
+                <button (click)="switchTab('tv')"
+                        [class.border-[#00daf3]]="activeTab === 'tv'"
+                        [class.text-[#00daf3]]="activeTab === 'tv'"
+                        [class.text-white/60]="activeTab !== 'tv'"
+                        class="flex-1 pb-2 text-center text-xs font-bold tracking-wider uppercase border-b-2 border-transparent transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span class="material-symbols-outlined text-[16px]">live_tv</span>
+                    TV en Vivo
+                </button>
+                <button (click)="switchTab('sports')"
+                        [class.border-[#00daf3]]="activeTab === 'sports'"
+                        [class.text-[#00daf3]]="activeTab === 'sports'"
+                        [class.text-white/60]="activeTab !== 'sports'"
+                        class="flex-1 pb-2 text-center text-xs font-bold tracking-wider uppercase border-b-2 border-transparent transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span class="material-symbols-outlined text-[16px]">sports_soccer</span>
+                    Deportes
+                </button>
+            </div>
+
+            <!-- TV View -->
+            <ng-container *ngIf="activeTab === 'tv'">
+                <!-- Search input -->
+                <div class="px-4 py-2 flex-shrink-0">
+                    <div class="h-[42px] bg-[#0f162a] border border-white/10 rounded-lg flex items-center px-3 group focus-within:border-[#00daf3]/50 transition-all">
+                        <span class="material-symbols-outlined text-[#00daf3] text-[18px] mr-2">search</span>
+                        <input type="text" 
+                               [value]="currentSearch"
+                               (input)="triggerSearch($any($event.target).value)"
+                               placeholder="Search channels..." 
+                               class="bg-transparent border-none outline-none text-white text-sm w-full placeholder-white/30" />
+                        <button *ngIf="currentSearch" 
+                                (click)="clearSearch()" 
+                                class="text-white/60 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scrollable Channel List -->
+                <div class="flex-1 overflow-y-auto px-2 py-3 space-y-1 hide-scrollbar" 
+                     (scroll)="onSidebarScroll($event)">
+                    
+                    <!-- Loading Skeleton -->
+                    <div *ngIf="loading && channels.length === 0" class="space-y-2 p-2">
+                        <div *ngFor="let item of [1,2,3,4,5,6,7,8]" class="h-11 bg-white/5 rounded-lg animate-pulse"></div>
+                    </div>
+
+                    <!-- Channel Items -->
+                    <div *ngFor="let ch of channels" 
+                         (click)="selectChannel(ch)"
+                         [class.bg-[#00daf3]/10]="selectedChannel?.id === ch.id"
+                         [class.text-[#00daf3]]="selectedChannel?.id === ch.id"
+                         class="group flex items-center px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/5">
+                        
+                        <span class="material-symbols-outlined text-[16px] mr-3"
+                              [class.text-[#00daf3]]="selectedChannel?.id === ch.id"
+                              [class.text-white/20]="selectedChannel?.id !== ch.id">
+                            tv
+                        </span>
+                        
+                        <span class="text-[12.5px] font-medium truncate flex-1"
+                              [class.text-[#00daf3]]="selectedChannel?.id === ch.id"
+                              [class.text-white/85]="selectedChannel?.id !== ch.id"
+                              [class.font-bold]="selectedChannel?.id === ch.id">
+                            {{ ch.name }}
+                        </span>
+
+                        <span *ngIf="ch.category" 
+                              [class.bg-[#00daf3]/10]="selectedChannel?.id === ch.id"
+                              [class.border-[#00daf3]/30]="selectedChannel?.id === ch.id"
+                              [class.text-[#00daf3]]="selectedChannel?.id === ch.id"
+                              [class.bg-white/5]="selectedChannel?.id !== ch.id"
+                              [class.border-white/10]="selectedChannel?.id !== ch.id"
+                              [class.text-white/60]="selectedChannel?.id !== ch.id"
+                              class="text-[8px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full border max-w-[80px] truncate ml-2">
+                            {{ ch.category }}
+                        </span>
+                    </div>
+
+                    <!-- Loading More Spinner -->
+                    <div *ngIf="loadingMore" class="py-4 flex justify-center">
+                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-[#00daf3]"></div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div *ngIf="!loading && channels.length === 0" class="text-center py-10 px-4">
+                        <span class="material-symbols-outlined text-white/20 text-4xl mb-2">search_off</span>
+                        <p class="text-white/40 text-xs">No channels found</p>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- Sports View -->
+            <ng-container *ngIf="activeTab === 'sports'">
+                <!-- Categorías de Deportes Horizontal Carousel with Nav Arrows -->
+                <div class="relative px-3 py-2 flex-shrink-0 flex items-center border-b border-white/5 pb-3">
+                    <!-- Left Arrow Button -->
+                    <button (click)="scrollSportsCategories(-120)" 
+                            [disabled]="sportsCategories.length === 0"
+                            [class.opacity-25]="sportsCategories.length === 0"
+                            [class.pointer-events-none]="sportsCategories.length === 0"
+                            class="text-white/40 hover:text-white mr-1 bg-[#0f162a] rounded-full p-1 border border-white/5 flex items-center justify-center transition-all cursor-pointer focus:outline-none">
+                        <span class="material-symbols-outlined text-[15px]">chevron_left</span>
+                    </button>
+
+                    <!-- Scrollable Area -->
+                    <div #sportsCategoriesScrollContainer
+                         class="flex-1 overflow-x-auto whitespace-nowrap hide-scrollbar flex gap-2 scroll-smooth items-center">
+                        <span *ngIf="sportsCategories.length === 0" class="text-xs text-white/40 py-1 px-1.5 italic select-none">
+                            {{ loadingSports ? 'Cargando categorías...' : 'Cargando...' }}
+                        </span>
+                        
+                        <button *ngFor="let cat of sportsCategories"
+                                (click)="selectSportsCategory(cat.id)"
+                                [class.bg-[#00daf3]/15]="selectedSportsCategory === cat.id"
+                                [class.border-[#00daf3]/50]="selectedSportsCategory === cat.id"
+                                [class.text-[#00daf3]]="selectedSportsCategory === cat.id"
+                                [class.bg-white/5]="selectedSportsCategory !== cat.id"
+                                [class.border-white/10]="selectedSportsCategory !== cat.id"
+                                [class.text-white/70]="selectedSportsCategory !== cat.id"
+                                class="inline-block text-[11px] font-semibold px-3 py-1.5 rounded-full border transition-all cursor-pointer">
+                            {{ cat.name }}
+                        </button>
+                    </div>
+
+                    <!-- Right Arrow Button -->
+                    <button (click)="scrollSportsCategories(120)" 
+                            [disabled]="sportsCategories.length === 0"
+                            [class.opacity-25]="sportsCategories.length === 0"
+                            [class.pointer-events-none]="sportsCategories.length === 0"
+                            class="text-white/40 hover:text-white ml-1 bg-[#0f162a] rounded-full p-1 border border-white/5 flex items-center justify-center transition-all cursor-pointer focus:outline-none">
+                        <span class="material-symbols-outlined text-[15px]">chevron_right</span>
+                    </button>
+                </div>
+
+                <!-- Eventos / Partidos List -->
+                <div class="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 hide-scrollbar">
+                    <!-- Loading Sports -->
+                    <div *ngIf="loadingSports && sportsEvents.length === 0" class="space-y-2 p-2">
+                        <div *ngFor="let item of [1,2,3,4,5]" class="h-11 bg-white/5 rounded-lg animate-pulse"></div>
+                    </div>
+                    
+                    <!-- Sports Events List -->
+                    <div *ngFor="let ev of sportsEvents"
+                         [class.bg-[#00daf3]/10]="selectedChannel?.url === ev.url"
+                         [class.text-[#00daf3]]="selectedChannel?.url === ev.url"
+                         class="group flex flex-col px-3 py-2.5 rounded-lg border border-transparent"
+                         [class.border-white/5]="selectedChannel?.url !== ev.url">
+                        
+                        <div (click)="selectSportsEvent(ev)" class="cursor-pointer">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[9px] font-bold text-[#00daf3]/70 uppercase tracking-wide">
+                                    {{ ev.source }}
+                                </span>
+                                <span class="text-[9px] text-white/40">
+                                    {{ ev.time }}
+                                </span>
+                            </div>
+                            
+                            <div class="text-[12.5px] font-medium leading-relaxed truncate-2-lines"
+                                  [class.text-[#00daf3]]="selectedChannel?.url === ev.url"
+                                  [class.text-white/85]="selectedChannel?.url !== ev.url">
+                                {{ ev.title }}
+                            </div>
+                        </div>
+
+                        <!-- Dropdown Menu for Alternatives -->
+                        <div *ngIf="selectedChannel?.isSport && selectedChannel?.url === ev.url && selectedChannel?.alternatives?.length > 0" 
+                             class="mt-2.5 flex flex-col gap-1">
+                            <label class="text-[10px] text-white/50 font-semibold uppercase tracking-wider">
+                                Cambiar Fuente:
+                            </label>
+                            <select (change)="selectSportsAlternative($any($event.target).value)"
+                                    class="w-full bg-[#0f162a] border border-white/10 hover:border-[#00daf3]/30 text-white/95 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:border-[#00daf3] transition-colors cursor-pointer">
+                                <option *ngFor="let alt of selectedChannel.alternatives" [value]="alt.url">
+                                    {{ alt.label }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Empty Sports State -->
+                    <div *ngIf="!loadingSports && sportsEvents.length === 0" class="text-center py-12 px-4">
+                        <span class="material-symbols-outlined text-white/20 text-4xl mb-2">sports_score</span>
+                        <p class="text-white/40 text-xs">No hay eventos activos en este momento</p>
+                    </div>
+                </div>
+            </ng-container>
+        </aside>
+
+        <!-- PLAYER AREA (RIGHT) -->
+        <main class="flex-1 h-full flex flex-col justify-center items-center relative overflow-hidden">
+            
+            <!-- Floating collapse/expand sidebar tab -->
+            <button (click)="toggleSidebar()" 
+                    class="absolute left-0 top-1/2 -translate-y-1/2 w-[16px] md:w-[20px] h-[64px] md:h-[48px] bg-[#0f162a]/90 hover:bg-[#0f162a] border border-white/10 border-l-0 rounded-r-lg flex items-center justify-center transition-all z-20 cursor-pointer text-[#00daf3]">
+                <span class="material-symbols-outlined text-[14px] md:text-[16px]">
+                    {{ isSidebarCollapsed ? 'chevron_right' : 'chevron_left' }}
+                </span>
+            </button>
+
+            <!-- Video Player Wrap -->
+            <div class="w-full h-full flex flex-col justify-center p-3 md:p-7 max-w-5xl">
+                
+                <!-- Toggle player/iframe mode button & Channel name top header -->
+                <div class="flex items-center justify-between gap-4 mb-4 flex-shrink-0 select-none">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="material-symbols-outlined text-[#00daf3] live-pulse">sensors</span>
+                        <h2 class="text-white font-semibold text-lg md:text-xl truncate" *ngIf="selectedChannel">
+                            {{ selectedChannel.name }}
+                        </h2>
+                        <h2 class="text-white/60 font-semibold text-lg md:text-xl truncate" *ngIf="!selectedChannel">
+                            Selecciona un canal
+                        </h2>
+                    </div>
+                    <div *ngIf="originalUrl || videoUrl" class="flex items-center gap-2">
+                        <span class="text-white/60 text-xs hidden md:inline">Reproductor:</span>
+                        <select [value]="playerMode" 
+                                (change)="onPlayerModeChange($event)"
+                                class="bg-[#0f162a]/90 hover:bg-[#0f162a] border border-white/10 text-white rounded-lg px-3 py-1.5 text-xs md:text-sm focus:outline-none focus:border-[#00daf3] transition-colors cursor-pointer">
+                            <option value="native">Nativo (HLS/MP4)</option>
+                            <option value="vime">Vime HLS</option>
+                            <option value="videojs">Video.js HLS</option>
+                            <option value="clappr">Clappr HLS</option>
+                            <option value="iframe">Iframe Alternativo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- AspectRatio Player container -->
+                <div class="relative w-full aspect-video bg-black rounded-lg md:rounded-2xl border border-white/10 shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden">
+                    
+                    <!-- 1. LOADING OVERLAY -->
+                    <div *ngIf="resolving" class="absolute inset-0 bg-[#0c1324]/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
+                        <div class="w-10 h-10 border-4 border-[#00daf3] border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-[#00daf3] text-sm font-medium animate-pulse">Resolving connection...</p>
+                    </div>
+
+                    <!-- 2. ERROR OVERLAY -->
+                    <div *ngIf="error" class="absolute inset-0 bg-red-950/20 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-4 p-6 text-center">
+                        <span class="material-symbols-outlined text-[#ffb4ab] text-5xl">error</span>
+                        <p class="text-white text-base font-semibold">{{ error }}</p>
+                    </div>
+
+                    <!-- 3. ACTUAL PLAYER (NATIVE HLS/MP4) -->
+                    <video #videoPlayer 
+                           *ngIf="videoUrl && playerMode === 'native'"
+                           controls 
+                           autoplay 
+                           playsinline 
+                           class="w-full h-full object-contain bg-black">
+                    </video>
+
+                    <!-- 4. VIME HLS PLAYER -->
+                    <vm-player *ngIf="videoUrl && playerMode === 'vime'" 
+                               autoplay 
+                               theme="dark" 
+                               (vmError)="onPlayerError($event)" 
+                               class="w-full h-full absolute inset-0 z-10" 
+                               style="--vm-player-theme: #00daf3;">
+                        <vm-hls [version]="'latest'">
+                            <source [attr.data-src]="videoUrl" type="application/x-mpegURL" />
+                        </vm-hls>
+                        <vm-ui>
+                            <vm-default-ui></vm-default-ui>
+                        </vm-ui>
+                    </vm-player>
+
+                    <!-- 5. VIDEO.JS PLAYER -->
+                    <div *ngIf="videoUrl && playerMode === 'videojs'" class="w-full h-full absolute inset-0 z-10 bg-black">
+                        <video #videoJSPlayer 
+                               class="video-js vjs-default-skin vjs-big-play-centered w-full h-full" 
+                               controls 
+                               playsinline 
+                               autoplay
+                               crossorigin="anonymous">
+                        </video>
+                    </div>
+
+                    <!-- 6. CLAPPR PLAYER -->
+                    <div *ngIf="videoUrl && playerMode === 'clappr'" 
+                         id="clappr-player-container" 
+                         #clapprPlayerContainer 
+                         class="w-full h-full absolute inset-0 z-10 bg-black">
+                    </div>
+
+                    <!-- 7. IFRAME FALLBACK PLAYER -->
+                    <iframe *ngIf="playerMode === 'iframe' && safeIframeUrl" 
+                            [src]="safeIframeUrl" 
+                            class="w-full h-full border-none absolute inset-0 z-10" 
+                            allowfullscreen 
+                            allow="autoplay *; encrypted-media *; fullscreen *; picture-in-picture *">
+                    </iframe>
+
+                    <!-- 5. LIVE CHANNEL BADGE overlay -->
+                    <div *ngIf="selectedChannel && !resolving && !error" 
+                         class="absolute top-3 right-3 bg-black/55 backdrop-blur-md px-2.5 py-1 rounded z-20 flex items-center gap-2 pointer-events-none select-none border border-white/5">
+                        <div class="w-1.5 h-1.5 bg-[#ff1744] rounded-full live-pulse"></div>
+                        <span class="text-white/90 text-[10.5px] font-semibold truncate max-w-[150px]">
+                            Live - {{ selectedChannel.name }}
+                        </span>
+                    </div>
+
+                    <!-- 6. DISCLAIMER OVERLAY -->
+                    <div *ngIf="showDisclaimer" 
+                         class="absolute inset-0 bg-[#0f162a]/95 z-40 flex items-center justify-center p-4 select-none transition-all duration-300">
+                        <div class="relative max-w-md w-full bg-[#0f162a] border border-[#00daf3]/40 rounded-xl p-5 shadow-[0_6px_16px_rgba(0,0,0,0.6)] flex flex-col items-center">
+                            
+                            <!-- Close Disclaimer -->
+                            <button (click)="closeDisclaimer()" 
+                                    class="absolute top-3 right-3 text-white/70 hover:text-white transition-colors cursor-pointer">
+                                <span class="material-symbols-outlined text-[20px]">close</span>
+                            </button>
+
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="material-symbols-outlined text-[#00daf3] text-xl">info</span>
+                                <h3 class="text-white font-bold text-[14px]">Descargo de Responsabilidad</h3>
+                            </div>
+                            
+                            <p class="text-white/90 text-center text-xs md:text-sm leading-relaxed font-normal">
+                                Veomio TV no hospeda, transmite ni almacena ningún contenido de video en sus servidores. Todos los canales y transmisiones provienen de fuentes de libre acceso públicamente disponibles en internet.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>

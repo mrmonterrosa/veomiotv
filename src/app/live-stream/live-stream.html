@@ -1,0 +1,53 @@
+<section class="w-full max-w-5xl mx-auto flex flex-col px-6 pt-28 pb-6 space-y-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 w-full">
+        <div class="flex items-center gap-4">
+            <a routerLink="/" class="text-on-surface-variant hover:text-primary transition-colors flex items-center">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <h2 class="font-headline-md text-primary flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary-fixed live-pulse">sensors</span>
+                {{ channelName }}
+            </h2>
+        </div>
+        <!-- Toggle button to fall back to Iframe -->
+        <button *ngIf="originalUrl" (click)="toggleIframeMode()"
+                class="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 hover:border-primary/80 bg-primary/5 hover:bg-primary/10 text-primary font-bold text-sm transition-all shadow-md hover:shadow-primary/10">
+            <span class="material-symbols-outlined text-[18px]">swap_horiz</span>
+            <span>{{ isIframe ? 'Reproductor HLS' : 'Modo Iframe (Alternativo)' }}</span>
+        </button>
+    </div>
+
+    <!-- Video Container -->
+    <div class="w-full aspect-video bg-black rounded-2xl overflow-hidden relative border border-white/10 shadow-2xl">
+        <!-- Resolving overlay -->
+        <div *ngIf="resolving" class="absolute inset-0 bg-background/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center space-y-4">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-primary font-headline-sm animate-pulse">Resolving stream connection...</p>
+        </div>
+
+        <!-- Error overlay -->
+        <div *ngIf="error" class="absolute inset-0 bg-error-container/20 backdrop-blur-sm z-20 flex flex-col items-center justify-center space-y-4 p-8 text-center">
+            <span class="material-symbols-outlined text-error text-6xl">error</span>
+            <p class="text-on-error-container font-headline-md">{{ error }}</p>
+            <button routerLink="/" class="bg-primary-container text-on-primary-container px-6 py-2 rounded-lg font-bold">Go Back</button>
+        </div>
+
+        <!-- Vime Player for direct HLS/MP4 streams -->
+        <vm-player *ngIf="videoUrl && !isIframe" autoplay theme="dark" (vmError)="onPlayerError($event)" class="w-full" style="--vm-player-theme: #10b981;">
+            <vm-hls [version]="'latest'">
+                <source [attr.data-src]="videoUrl" type="application/x-mpegURL" />
+            </vm-hls>
+            <vm-ui>
+                <vm-default-ui></vm-default-ui>
+            </vm-ui>
+        </vm-player>
+
+        <!-- Iframe fallback for unresolved embeds (e.g., bolaloca, clappr, etc.) -->
+        <iframe *ngIf="isIframe && safeIframeUrl" [src]="safeIframeUrl" 
+                class="w-full h-full border-0 absolute inset-0" 
+                allowfullscreen 
+                allow="autoplay *; encrypted-media *; fullscreen *; picture-in-picture *">
+        </iframe>
+    </div>
+</section>

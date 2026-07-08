@@ -1,0 +1,22 @@
+/* Custom styles for the home component */
+.font-fill-1 {
+    font-variation-settings: 'FILL' 1;
+}
+
+.live-pulse {
+    animation: pulse 2.0s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Hide scrollbars */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
