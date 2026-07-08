@@ -26,19 +26,19 @@ Este documento resume todos los cambios, implementaciones y depuraciones realiza
 
 ## 📂 Archivos Modificados
 
-### 💻 Frontend (Angular: `streamflow-web`)
+### 💻 Frontend (Angular: `veomiotv`)
 
-#### 1. [`home.html`](file:///C:/Users/cgonz/OneDrive/Documents/home/devs/code/java/ia-local/streamflow-web/src/app/home/home.html)
+#### 1. [`home.html`](file:///c:/Users/cgonz/OneDrive/Documents/home/devs/code/node/veomiotv/src/app/home/home.html)
 * Modificación en la lista horizontal de categorías deportivas para integrar los contenedores de scroll, clases dinámicas y las flechas de control.
 * Inclusión del selector condicional `<select>` para cambiar de fuentes alternativas de vídeo, visible únicamente cuando el canal seleccionado es deportivo y contiene alternativas resueltas.
 * Simplificación de la comparación del canal activo a nivel de plantilla, eliminando la comprobación por MD5 y usando comparación directa de URLs (`selectedChannel?.url === ev.url`).
 
-#### 2. [`home.ts`](file:///C:/Users/cgonz/OneDrive/Documents/home/devs/code/java/ia-local/streamflow-web/src/app/home/home.ts)
+#### 2. [`home.ts`](file:///c:/Users/cgonz/OneDrive/Documents/home/devs/code/node/veomiotv/src/app/home/home.ts)
 * Adición del método `scrollCategories(direction: 'left' | 'right')` para manejar el desplazamiento dinámico de la lista de pestañas.
 * Inclusión de lógica asíncrona dentro de `resolveAndPlay()` para consumir el endpoint `/live/sports/resolve` e inyectar dinámicamente las alternativas de transmisión.
 * Adición de llamadas a `this.cdr.detectChanges()` para forzar la actualización visual del DOM en Angular tras la resolución asíncrona de las alternativas.
 
-#### 3. [`api.ts`](file:///C:/Users/cgonz/OneDrive/Documents/home/devs/code/java/ia-local/streamflow-web/src/app/services/api.ts)
+#### 3. [`api.ts`](file:///c:/Users/cgonz/OneDrive/Documents/home/devs/code/node/veomiotv/src/app/services/api.ts)
 * Configuración del endpoint de la API con detección inteligente de entornos (`localhost` vs. Producción).
 
 ---
