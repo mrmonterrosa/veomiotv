@@ -1,6 +1,6 @@
 # Contexto de Desarrollo: Veomio Angular
 
-Este documento resume todos los cambios, implementaciones y depuraciones realizadas en la aplicación frontend de Angular (`streamflow-web`) y su integración con la API de Laravel (`veomio-api`).
+Este documento resume todos los cambios, implementaciones y depuraciones realizadas en la aplicación frontend de Angular (`veomiotv`) y su integración con la API de Laravel (`veomio-api`).
 
 ---
 
@@ -37,6 +37,7 @@ Este documento resume todos los cambios, implementaciones y depuraciones realiza
 * Adición del método `scrollCategories(direction: 'left' | 'right')` para manejar el desplazamiento dinámico de la lista de pestañas.
 * Inclusión de lógica asíncrona dentro de `resolveAndPlay()` para consumir el endpoint `/live/sports/resolve` e inyectar dinámicamente las alternativas de transmisión.
 * Adición de llamadas a `this.cdr.detectChanges()` para forzar la actualización visual del DOM en Angular tras la resolución asíncrona de las alternativas.
+* Adición del helper `shouldProxy()` y reestructuración de la lógica de resolución para redirigir transmisiones HTTPS protegidas por referer al proxy de la API de Laravel.
 
 #### 3. [`api.ts`](file:///c:/Users/cgonz/OneDrive/Documents/home/devs/code/node/veomiotv/src/app/services/api.ts)
 * Configuración del endpoint de la API con detección inteligente de entornos (`localhost` vs. Producción).
@@ -56,3 +57,15 @@ Este documento resume todos los cambios, implementaciones y depuraciones realiza
 ### 3. Bypass de Bloqueo Cloudflare
 * **Problema:** Los servidores de CDN asociados a RoxieStreams bloqueaban las solicitudes redirigidas a través del proxy de Laravel con código **403 Forbidden** al detectar la IP del servidor.
 * **Solución:** Se configuró el cliente Angular para discernir protocolos; reproduciendo `https` directamente en el navegador y delegando únicamente `http` al proxy.
+
+### 4. Corrección de Error 403 Forbidden en Servidores de HLS Deportivos (CORS/Referer)
+* **Problema:** Canales de fútbol alojados en CDN externos (ej. `formaturamaxi.com.br`, `shadow-ran` o `roxiestreams`) que usan HTTPS fallaban con error 403 al reproducirse directamente en el navegador, debido a que estos servidores restringen la reproducción a orígenes específicos e invalidan el request si falta la cabecera `Referer` adecuada (el navegador no permite inyectarla de forma nativa).
+* **Solución:** Implementación del helper `shouldProxy()` en `home.ts` que redirige el flujo de vídeo a través del endpoint `/api/v1/stream` del proxy de Laravel (el cual inyecta la cabecera `Referer` y `Origin` correctas) para cualquier URL que apunte a un dominio protegido, independientemente de si usa protocolo HTTP o HTTPS.
+
+### 5. Pérdida de Menú de Fuentes Alternativas
+* **Problema:** Al seleccionar una opción del selector "Cambiar Fuente", el componente resolvía la fuente alternativa y sobreescribía la propiedad `this.selectedChannel.alternatives` con un arreglo vacío `[]` al no devolver el stream secundario más alternativas en la respuesta, haciendo desaparecer el dropdown de la interfaz.
+* **Solución:** Se añadió una validación condicional que solo actualiza `selectedChannel.alternatives` si el backend responde con un listado no vacío (`response.alternatives.length > 0`), manteniendo visibles y disponibles las alternativas iniciales del evento principal.
+
+### 6. Reubicación de Botón de Colapso Lateral
+* **Problema:** El botón de colapso flotante en el centro vertical de la pantalla cortaba visualmente el reproductor y afectaba la estética general de la interfaz de usuario.
+* **Solución:** Se modificaron los estilos del botón en `home.html` para reubicarlo en la parte superior derecha de la barra lateral (`top-[22px]`), alineándolo armónicamente con el logotipo corporativo y reduciendo su escala visual.

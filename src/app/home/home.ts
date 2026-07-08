@@ -230,6 +230,18 @@ export class Home implements OnInit, OnDestroy {
     this.resolveAndPlay(channel.url);
   }
 
+  private shouldProxy(url: string): boolean {
+    if (!url) return false;
+    if (url.startsWith('http://')) return true;
+    const lower = url.toLowerCase();
+    const protectedDomains = [
+      'vimeos', 'goodstream', 'streamfort', 'streamwish', 'wishonly', 
+      'hlswish', 'jwplayerhls', 'formaturamaxi', 'shadow-ran', 
+      'roxiestreams', 'aapmains', 'hereisman', 'thetvapp'
+    ];
+    return protectedDomains.some(domain => lower.includes(domain));
+  }
+
   async resolveAndPlay(embedUrl: string) {
     this.originalUrl = embedUrl;
     this.destroyHls();
@@ -246,11 +258,14 @@ export class Home implements OnInit, OnDestroy {
         console.log('RESOLVED SPORTS RESPONSE:', response);
         if (response && response.success && response.url) {
           if (this.selectedChannel) {
-            this.selectedChannel.alternatives = response.alternatives || [];
+            // Solo actualizar la lista de alternativas si la respuesta provee una no vacía
+            if (response.alternatives && response.alternatives.length > 0) {
+              this.selectedChannel.alternatives = response.alternatives;
+            }
             this.cdr.detectChanges();
           }
           
-          if (response.url.startsWith('http://')) {
+          if (this.shouldProxy(response.url)) {
             this.videoUrl = this.api.getProxyStreamUrl(response.url);
           } else {
             this.videoUrl = response.url;
@@ -272,9 +287,9 @@ export class Home implements OnInit, OnDestroy {
         return;
       }
 
-      // Para URLs HLS o directas, reproducimos utilizando el proxy si son HTTP para evitar CORS y upgrades forzados de HTTPS
+      // Para URLs HLS o directas, reproducimos utilizando el proxy si son HTTP o pertenecen a dominios protegidos para evitar CORS/Cierre de Referer
       if (embedUrl.includes('.m3u8') || embedUrl.includes('.m3u') || embedUrl.includes('.mp4') || embedUrl.includes('m3u')) {
-        if (embedUrl.startsWith('http://')) {
+        if (this.shouldProxy(embedUrl)) {
           this.videoUrl = this.api.getProxyStreamUrl(embedUrl);
         } else {
           this.videoUrl = embedUrl;
@@ -297,7 +312,7 @@ export class Home implements OnInit, OnDestroy {
         }
 
         let finalUrl = streamUrl;
-        if (streamUrl.startsWith('http://')) {
+        if (this.shouldProxy(streamUrl)) {
           let proxyUrl = response.data.stream_proxy || this.api.getProxyStreamUrl(streamUrl);
           
           // Si la página es HTTPS, asegurar que la URL del proxy también lo sea
