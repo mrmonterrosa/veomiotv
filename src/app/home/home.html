@@ -288,7 +288,7 @@
                     </video>
 
                     <!-- 4. VIME HLS PLAYER -->
-                    <vm-player *ngIf="videoUrl && playerMode === 'vime'" 
+                    <vm-player *ngIf="videoUrl && playerMode === 'vime' && getStreamType(videoUrl) !== 'application/dash+xml'" 
                                autoplay 
                                theme="dark" 
                                (vmError)="onPlayerError($event)" 
@@ -297,6 +297,21 @@
                         <vm-hls [version]="'latest'">
                             <source [attr.data-src]="videoUrl" type="application/x-mpegURL" />
                         </vm-hls>
+                        <vm-ui>
+                            <vm-default-ui></vm-default-ui>
+                        </vm-ui>
+                    </vm-player>
+
+                    <!-- 4.1 VIME DASH PLAYER (MPD) -->
+                    <vm-player *ngIf="videoUrl && playerMode === 'vime' && getStreamType(videoUrl) === 'application/dash+xml'" 
+                               autoplay 
+                               theme="dark" 
+                               (vmError)="onPlayerError($event)" 
+                               class="w-full h-full absolute inset-0 z-10" 
+                               style="--vm-player-theme: #00daf3;">
+                        <vm-dash [version]="'latest'">
+                            <source [attr.data-src]="videoUrl" type="application/dash+xml" />
+                        </vm-dash>
                         <vm-ui>
                             <vm-default-ui></vm-default-ui>
                         </vm-ui>

@@ -230,6 +230,18 @@ export class Home implements OnInit, OnDestroy {
     this.resolveAndPlay(channel.url);
   }
 
+  getStreamType(url: string): string {
+    if (!url) return '';
+    const lower = url.toLowerCase();
+    if (lower.includes('.mpd') || lower.includes('mpd')) {
+      return 'application/dash+xml';
+    }
+    if (lower.includes('.mp4')) {
+      return 'video/mp4';
+    }
+    return 'application/x-mpegURL';
+  }
+
   private shouldProxy(url: string): boolean {
     if (!url) return false;
     if (url.startsWith('http://')) return true;
@@ -273,6 +285,11 @@ export class Home implements OnInit, OnDestroy {
           } else {
             this.videoUrl = response.url;
           }
+
+          // Auto-conmutación si es DASH (.mpd)
+          if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && this.playerMode === 'native') {
+            this.playerMode = 'videojs';
+          }
           
           this.applyPlayerMode();
           return;
@@ -290,8 +307,8 @@ export class Home implements OnInit, OnDestroy {
         return;
       }
 
-      // Para URLs HLS o directas, reproducimos utilizando el proxy si son HTTP o pertenecen a dominios protegidos para evitar CORS/Cierre de Referer
-      if (embedUrl.includes('.m3u8') || embedUrl.includes('.m3u') || embedUrl.includes('.mp4') || embedUrl.includes('m3u')) {
+      // Para URLs HLS, DASH o directas, reproducimos utilizando el proxy si son HTTP o pertenecen a dominios protegidos
+      if (embedUrl.includes('.m3u8') || embedUrl.includes('.m3u') || embedUrl.includes('.mp4') || embedUrl.includes('m3u') || embedUrl.includes('.mpd') || embedUrl.includes('mpd')) {
         if (this.shouldProxy(embedUrl)) {
           let referer = '';
           const lowerUrl = embedUrl.toLowerCase();
@@ -304,6 +321,12 @@ export class Home implements OnInit, OnDestroy {
         } else {
           this.videoUrl = embedUrl;
         }
+
+        // Auto-conmutación si es DASH (.mpd)
+        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && this.playerMode === 'native') {
+          this.playerMode = 'videojs';
+        }
+
         this.applyPlayerMode();
         return;
       }
@@ -342,6 +365,12 @@ export class Home implements OnInit, OnDestroy {
         }
 
         this.videoUrl = finalUrl;
+
+        // Auto-conmutación si es DASH (.mpd)
+        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && this.playerMode === 'native') {
+          this.playerMode = 'videojs';
+        }
+
         this.applyPlayerMode();
       } else {
         this.setupIframeFallback(embedUrl);
@@ -557,7 +586,9 @@ export class Home implements OnInit, OnDestroy {
           },
           sources: [{
             src: currentUrl,
-            type: currentUrl.includes('.mp4') ? 'video/mp4' : 'application/vnd.apple.mpegurl'
+            type: this.getStreamType(currentUrl) === 'application/dash+xml' 
+              ? 'application/dash+xml' 
+              : (currentUrl.includes('.mp4') ? 'video/mp4' : 'application/vnd.apple.mpegurl')
           }],
           fluid: false,
           liveui: true
