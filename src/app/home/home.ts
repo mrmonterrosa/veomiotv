@@ -683,6 +683,14 @@ export class Home implements OnInit, OnDestroy {
     const video = this.videoPlayer.nativeElement;
     const url = this.videoUrl;
 
+    // Si es DASH (.mpd), el reproductor nativo no puede reproducirlo y causaría una descarga. Conmutamos a Video.js.
+    if (this.getStreamType(url) === 'application/dash+xml') {
+      console.warn("DASH stream detected in native player. Auto-switching to Video.js.");
+      this.playerMode = 'videojs';
+      this.initVideoJS();
+      return;
+    }
+
     const isHls = url.includes('.m3u8') || url.includes('.m3u') || url.includes('stream?url=') || url.includes('/stream?url=');
 
     if (isHls) {
