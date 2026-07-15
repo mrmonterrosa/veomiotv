@@ -275,7 +275,7 @@
 
                     <!-- 3. ACTUAL PLAYER (NATIVE HLS/MP4) -->
                     <video #videoPlayer 
-                           *ngIf="videoUrl && playerMode === 'native'"
+                           *ngIf="videoUrl && (playerMode === 'native' || (playerMode === 'vime' && isMpegTs(videoUrl)))"
                            controls 
                            autoplay 
                            playsinline 

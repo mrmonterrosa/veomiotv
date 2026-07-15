@@ -30,6 +30,7 @@ export class Home implements OnInit, OnDestroy {
   private videoJSPlayerInstance: any = null;
   private clapprPlayerInstance: any = null;
   private shakaPlayerInstance: any = null;
+  private mpegtsPlayerInstance: any = null;
   private isApiFetching = false;
 
   // Player mode selector
@@ -108,6 +109,7 @@ export class Home implements OnInit, OnDestroy {
     this.destroyVideoJS();
     this.destroyClappr();
     this.destroyShaka();
+    this.destroyMpegTs();
     if (this.queryParamsSub) {
       this.queryParamsSub.unsubscribe();
     }
@@ -249,7 +251,83 @@ export class Home implements OnInit, OnDestroy {
     if (lower.includes('.mp4')) {
       return 'video/mp4';
     }
+    if (this.isMpegTs(url)) {
+      return 'video/mp2t';
+    }
     return 'application/x-mpegURL';
+  }
+
+  isMpegTs(url: string): boolean {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    return lower.includes('.ts') || lower.includes('/play/') || lower.includes('/live/');
+  }
+
+  loadMpegTsScript(): Promise<void> {
+    return new Promise((resolve) => {
+      if ((window as any).mpegts) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js';
+      script.onload = () => {
+        resolve();
+      };
+      script.onerror = () => {
+        console.error("Failed to load mpegts.js from CDN");
+        resolve();
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  initMpegTs(videoElement: HTMLVideoElement, url: string) {
+    this.destroyMpegTs();
+    this.resolving = true;
+    this.cdr.detectChanges();
+
+    this.loadMpegTsScript().then(() => {
+      const mpegts = (window as any).mpegts;
+      if (mpegts && mpegts.isSupported()) {
+        try {
+          this.mpegtsPlayerInstance = mpegts.createPlayer({
+            type: 'mse',
+            url: url,
+            isLive: true
+          });
+          this.mpegtsPlayerInstance.attachMediaElement(videoElement);
+          this.mpegtsPlayerInstance.load();
+          this.mpegtsPlayerInstance.play().then(() => {
+            this.resolving = false;
+            this.cdr.detectChanges();
+          }).catch((e: any) => {
+            console.log("Mpegts autoplay blocked or failed:", e);
+            this.resolving = false;
+            this.cdr.detectChanges();
+          });
+        } catch (err) {
+          console.error("Error creating mpegts player:", err);
+          this.resolving = false;
+          this.cdr.detectChanges();
+        }
+      } else {
+        console.error("mpegts.js is not supported in this browser");
+        this.resolving = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  destroyMpegTs() {
+    if (this.mpegtsPlayerInstance) {
+      try {
+        this.mpegtsPlayerInstance.destroy();
+      } catch (e) {
+        console.error("Error destroying mpegts player:", e);
+      }
+      this.mpegtsPlayerInstance = null;
+    }
   }
 
   setupDashConfig(url: string) {
@@ -556,9 +634,10 @@ export class Home implements OnInit, OnDestroy {
     this.destroyVideoJS();
     this.destroyClappr();
     this.destroyShaka();
+    this.destroyMpegTs();
     this.isIframe = (this.playerMode === 'iframe');
 
-    if (this.playerMode === 'native') {
+    if (this.playerMode === 'native' || (this.playerMode === 'vime' && this.videoUrl && this.isMpegTs(this.videoUrl))) {
       this.loadNativeVideoAfterDelay();
     } else if (this.playerMode === 'shaka') {
       this.initShaka();
@@ -789,6 +868,12 @@ export class Home implements OnInit, OnDestroy {
       this.initShaka();
       return;
     }
+    if (url && this.isMpegTs(url) && this.playerMode === 'vime') {
+      console.warn("Vime failed playing MPEG-TS. Auto-switching to Native (mpegts.js)...");
+      this.playerMode = 'native';
+      this.applyPlayerMode();
+      return;
+    }
     if (this.originalUrl) {
       this.setupIframeFallback(this.originalUrl);
     }
@@ -829,10 +914,16 @@ export class Home implements OnInit, OnDestroy {
 
   loadNativeVideo() {
     this.destroyHls();
+    this.destroyMpegTs();
     if (!this.videoPlayer || !this.videoUrl) return;
 
     const video = this.videoPlayer.nativeElement;
     const url = this.videoUrl;
+
+    if (this.isMpegTs(url)) {
+      this.initMpegTs(video, url);
+      return;
+    }
 
     // Si es DASH (.mpd), el reproductor nativo no puede reproducirlo y causaría una descarga. Conmutamos a Shaka Player.
     if (this.getStreamType(url) === 'application/dash+xml') {
