@@ -42,6 +42,7 @@ export class Api {
   async getLiveChannels(page: number = 1, source: string = '', search: string = '') {
     const url = new URL(`${this.baseUrl}/live/channels`);
     url.searchParams.append('page', page.toString());
+    url.searchParams.append('per_page', '20');
     url.searchParams.append('platform', 'web');
     if (source) url.searchParams.append('source', source);
     if (search) url.searchParams.append('search', search);
