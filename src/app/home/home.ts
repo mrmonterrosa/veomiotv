@@ -32,7 +32,7 @@ export class Home implements OnInit, OnDestroy {
   private shakaPlayerInstance: any = null;
 
   // Player mode selector
-  playerMode: 'native' | 'shaka' | 'vime' | 'videojs' | 'clappr' | 'iframe' = 'native';
+  playerMode: 'native' | 'shaka' | 'vime' | 'videojs' | 'clappr' | 'iframe' = 'vime';
   // Channel list variables
   channels: any[] = [];
   loading = true;
@@ -327,8 +327,10 @@ export class Home implements OnInit, OnDestroy {
         }
 
         // Auto-conmutación si es DASH (.mpd)
-        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && (this.playerMode === 'native' || this.playerMode === 'videojs')) {
+        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml') {
           this.playerMode = 'shaka';
+        } else if (this.playerMode === 'shaka') {
+          this.playerMode = 'vime'; // Si era shaka pero ahora no es dash, cambiar a vime
         }
 
         this.applyPlayerMode();
@@ -371,8 +373,10 @@ export class Home implements OnInit, OnDestroy {
         this.videoUrl = finalUrl;
 
         // Auto-conmutación si es DASH (.mpd)
-        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && (this.playerMode === 'native' || this.playerMode === 'videojs')) {
+        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml') {
           this.playerMode = 'shaka';
+        } else if (this.playerMode === 'shaka') {
+          this.playerMode = 'vime'; // Si era shaka pero ahora no es dash, cambiar a vime
         }
 
         this.applyPlayerMode();
