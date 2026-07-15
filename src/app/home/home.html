@@ -235,10 +235,17 @@
             </button>
 
             <!-- Video Player Wrap -->
-            <div class="w-full h-full flex flex-col justify-center p-3 md:p-7 max-w-5xl">
+            <div [class.max-w-5xl]="!isSidebarCollapsed"
+                 [class.max-w-none]="isSidebarCollapsed"
+                 [class.p-3]="!isSidebarCollapsed"
+                 [class.md:p-7]="!isSidebarCollapsed"
+                 [class.p-0]="isSidebarCollapsed"
+                 class="w-full h-full flex flex-col justify-center transition-all duration-300">
                 
                 <!-- Toggle player/iframe mode button & Channel name top header -->
-                <div class="flex items-center justify-between gap-4 mb-4 flex-shrink-0 select-none">
+                <div [class.px-4]="isSidebarCollapsed"
+                     [class.pt-4]="isSidebarCollapsed"
+                     class="flex items-center justify-between gap-4 mb-4 flex-shrink-0 select-none">
                     <div class="flex items-center gap-3 min-w-0">
                         <span class="material-symbols-outlined text-[#00daf3] live-pulse">sensors</span>
                         <h2 class="text-white font-semibold text-lg md:text-xl truncate" *ngIf="selectedChannel">
@@ -259,7 +266,15 @@
                 </div>
 
                 <!-- AspectRatio Player container -->
-                <div class="relative w-full aspect-video bg-black rounded-lg md:rounded-2xl border border-white/10 shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden">
+                <div [class.rounded-none]="isSidebarCollapsed"
+                     [class.border-none]="isSidebarCollapsed"
+                     [class.h-full]="isSidebarCollapsed"
+                     [class.flex-1]="isSidebarCollapsed"
+                     [class.rounded-lg]="!isSidebarCollapsed"
+                     [class.md:rounded-2xl]="!isSidebarCollapsed"
+                     [class.border]="!isSidebarCollapsed"
+                     [class.border-white/10]="!isSidebarCollapsed"
+                     class="relative w-full aspect-video bg-black shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden">
                     
                     <!-- 1. LOADING OVERLAY -->
                     <div *ngIf="resolving" class="absolute inset-0 bg-[#0c1324]/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
