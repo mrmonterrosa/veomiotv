@@ -275,7 +275,7 @@ export class Home implements OnInit, OnDestroy {
         return;
       }
       const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js';
+      script.src = 'https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js';
       script.onload = () => {
         resolve();
       };
