@@ -367,6 +367,7 @@ export class Home implements OnInit, OnDestroy {
 
   private shouldProxy(url: string): boolean {
     if (!url) return false;
+    if (this.isMpegTs(url)) return false;
     if (url.startsWith('http://')) return true;
     const lower = url.toLowerCase();
     const protectedDomains = [
