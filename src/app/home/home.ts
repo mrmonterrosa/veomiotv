@@ -30,6 +30,7 @@ export class Home implements OnInit, OnDestroy {
   private videoJSPlayerInstance: any = null;
   private clapprPlayerInstance: any = null;
   private shakaPlayerInstance: any = null;
+  private isApiFetching = false;
 
   // Player mode selector
   playerMode: 'native' | 'shaka' | 'vime' | 'videojs' | 'clappr' | 'iframe' = 'vime';
@@ -77,6 +78,7 @@ export class Home implements OnInit, OnDestroy {
   async ngOnInit() {
     // Escuchar cambios de parámetros para restaurar o seleccionar canal
     this.queryParamsSub = this.route.queryParams.subscribe(async params => {
+      if (this.isApiFetching) return;
       const targetId = params['id'];
       
       // Si el buscador viene en la URL
@@ -128,7 +130,9 @@ export class Home implements OnInit, OnDestroy {
   }
 
   async loadChannels(search: string, page: number, targetIdToSelect?: string) {
+    if (this.isApiFetching) return;
     try {
+      this.isApiFetching = true;
       if (page === 1) {
         this.loading = true;
       } else {
@@ -165,6 +169,7 @@ export class Home implements OnInit, OnDestroy {
     } finally {
       this.loading = false;
       this.loadingMore = false;
+      this.isApiFetching = false;
       this.cdr.detectChanges();
     }
   }
