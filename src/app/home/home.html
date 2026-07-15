@@ -182,18 +182,15 @@
                          class="group flex flex-col px-3 py-2.5 rounded-lg border border-transparent"
                          [class.border-white/5]="selectedChannel?.url !== ev.url">
                         
-                        <div (click)="selectSportsEvent(ev)" class="cursor-pointer">
-                            <div class="flex items-center justify-end mb-1">
-                                <span class="text-[9px] text-white/40">
-                                    {{ ev.time }}
-                                </span>
-                            </div>
-                            
-                            <div class="text-[12.5px] font-medium leading-relaxed truncate-2-lines"
+                        <div (click)="selectSportsEvent(ev)" class="cursor-pointer flex items-center justify-between gap-3">
+                            <div class="text-[12.5px] font-medium leading-relaxed truncate-2-lines flex-1"
                                   [class.text-[#00daf3]]="selectedChannel?.url === ev.url"
                                   [class.text-white/85]="selectedChannel?.url !== ev.url">
                                 {{ ev.title }}
                             </div>
+                            <span class="text-[9px] text-white/40 flex-shrink-0 text-right">
+                                {{ ev.time }}
+                            </span>
                         </div>
 
                         <!-- Dropdown Menu for Alternatives -->
