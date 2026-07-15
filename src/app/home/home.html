@@ -268,13 +268,11 @@
                 <!-- AspectRatio Player container -->
                 <div [class.rounded-none]="isSidebarCollapsed"
                      [class.border-none]="isSidebarCollapsed"
-                     [class.h-full]="isSidebarCollapsed"
-                     [class.flex-1]="isSidebarCollapsed"
                      [class.rounded-lg]="!isSidebarCollapsed"
                      [class.md:rounded-2xl]="!isSidebarCollapsed"
                      [class.border]="!isSidebarCollapsed"
                      [class.border-white/10]="!isSidebarCollapsed"
-                     class="relative w-full aspect-video bg-black shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden">
+                     class="relative w-full aspect-video bg-black shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden max-h-[calc(100vh-120px)] mx-auto">
                     
                     <!-- 1. LOADING OVERLAY -->
                     <div *ngIf="resolving" class="absolute inset-0 bg-[#0c1324]/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
