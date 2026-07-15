@@ -521,6 +521,12 @@ export class Home implements OnInit, OnDestroy {
   }
 
   setupIframeFallback(url: string) {
+    if (url.includes('.mpd') || url.includes('mpd') || this.getStreamType(url) === 'application/dash+xml') {
+      this.error = 'No se pudo reproducir este canal en Reproductor 1. Intente con el Reproductor 2.';
+      this.resolving = false;
+      this.cdr.detectChanges();
+      return;
+    }
     console.warn("Falling back to iframe embed:", url);
     this.playerMode = 'iframe';
     this.isIframe = true;
@@ -771,6 +777,13 @@ export class Home implements OnInit, OnDestroy {
 
   onPlayerError(event: any) {
     console.error("Vime Player Error:", event);
+    const url = this.videoUrl || this.originalUrl;
+    if (url && this.getStreamType(url) === 'application/dash+xml' && this.playerMode === 'vime') {
+      console.warn("Vime failed playing DASH. Auto-switching to Shaka Player (Reproductor 2)...");
+      this.playerMode = 'shaka';
+      this.initShaka();
+      return;
+    }
     if (this.originalUrl) {
       this.setupIframeFallback(this.originalUrl);
     }

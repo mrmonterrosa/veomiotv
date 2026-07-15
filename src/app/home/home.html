@@ -250,11 +250,10 @@
                     </div>
                     <div *ngIf="originalUrl || videoUrl" class="flex items-center gap-2">
                         <span class="text-white/60 text-xs hidden md:inline">Reproductor:</span>
-                        <select [value]="playerMode" 
-                                (change)="onPlayerModeChange($event)"
+                        <select (change)="onPlayerModeChange($event)"
                                 class="bg-[#0f162a]/90 hover:bg-[#0f162a] border border-white/10 text-white rounded-lg px-3 py-1.5 text-xs md:text-sm focus:outline-none focus:border-[#00daf3] transition-colors cursor-pointer">
-                            <option value="vime">Vime HLS</option>
-                            <option value="shaka">Shaka Player (DASH/DRM)</option>
+                            <option value="vime" [selected]="playerMode === 'vime'">Reproductor 1</option>
+                            <option value="shaka" [selected]="playerMode === 'shaka'">Reproductor 2</option>
                         </select>
                     </div>
                 </div>
