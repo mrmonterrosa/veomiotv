@@ -426,7 +426,7 @@ export class Home implements OnInit, OnDestroy {
       }
 
       // Para URLs HLS, DASH o directas, reproducimos utilizando el proxy si son HTTP o pertenecen a dominios protegidos
-      if (embedUrl.includes('.m3u8') || embedUrl.includes('.m3u') || embedUrl.includes('.mp4') || embedUrl.includes('m3u') || embedUrl.includes('.mpd') || embedUrl.includes('mpd')) {
+      if (embedUrl.includes('.m3u8') || embedUrl.includes('.m3u') || embedUrl.includes('.mp4') || embedUrl.includes('m3u') || embedUrl.includes('.mpd') || embedUrl.includes('mpd') || this.isMpegTs(embedUrl)) {
         if (this.shouldProxy(embedUrl)) {
           let referer = '';
           const lowerUrl = embedUrl.toLowerCase();
@@ -435,7 +435,13 @@ export class Home implements OnInit, OnDestroy {
           } else if (lowerUrl.includes('thetvapp') || lowerUrl.includes('aapmains') || lowerUrl.includes('hereisman')) {
             referer = 'https://gooz.aapmains.net/';
           }
-          this.videoUrl = this.api.getProxyStreamUrl(embedUrl, referer);
+          
+          let proxyUrl = this.api.getProxyStreamUrl(embedUrl, referer);
+          const isHttpsPage = window.location.protocol === 'https:';
+          if (isHttpsPage && proxyUrl.startsWith('http://') && !proxyUrl.includes('localhost') && !proxyUrl.includes('127.0.0.1')) {
+            proxyUrl = proxyUrl.replace('http://', 'https://');
+          }
+          this.videoUrl = proxyUrl;
         } else {
           this.videoUrl = embedUrl;
         }
