@@ -183,10 +183,7 @@
                          [class.border-white/5]="selectedChannel?.url !== ev.url">
                         
                         <div (click)="selectSportsEvent(ev)" class="cursor-pointer">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-[9px] font-bold text-[#00daf3]/70 uppercase tracking-wide">
-                                    {{ ev.source }}
-                                </span>
+                            <div class="flex items-center justify-end mb-1">
                                 <span class="text-[9px] text-white/40">
                                     {{ ev.time }}
                                 </span>
@@ -236,11 +233,11 @@
 
             <!-- Video Player Wrap -->
             <div [class.max-w-5xl]="!isSidebarCollapsed"
-                 [class.max-w-none]="isSidebarCollapsed"
+                 [style.max-width]="isSidebarCollapsed ? 'calc((100vh - 120px) * 16 / 9)' : ''"
                  [class.p-3]="!isSidebarCollapsed"
                  [class.md:p-7]="!isSidebarCollapsed"
                  [class.p-0]="isSidebarCollapsed"
-                 class="w-full h-full flex flex-col justify-center transition-all duration-300">
+                 class="w-full h-full flex flex-col justify-center transition-all duration-300 mx-auto">
                 
                 <!-- Toggle player/iframe mode button & Channel name top header -->
                 <div [class.px-4]="isSidebarCollapsed"
@@ -272,7 +269,7 @@
                      [class.md:rounded-2xl]="!isSidebarCollapsed"
                      [class.border]="!isSidebarCollapsed"
                      [class.border-white/10]="!isSidebarCollapsed"
-                     class="relative w-full aspect-video bg-black shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden max-h-[calc(100vh-120px)] mx-auto">
+                     class="relative w-full aspect-video bg-black shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden">
                     
                     <!-- 1. LOADING OVERLAY -->
                     <div *ngIf="resolving" class="absolute inset-0 bg-[#0c1324]/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
