@@ -639,6 +639,16 @@ export class Home implements OnInit, OnDestroy {
       const videoElement = this.shakaPlayer.nativeElement;
       
       try {
+        // Install polyfills to patch browser incompatibilities
+        if (typeof shaka !== 'undefined') {
+          shaka.polyfill.installAll();
+        } else {
+          console.error("Shaka Player library is not loaded from CDN!");
+          this.resolving = false;
+          this.cdr.detectChanges();
+          return;
+        }
+
         // Initialize Shaka Player
         const player = new shaka.Player(videoElement);
         this.shakaPlayerInstance = player;
