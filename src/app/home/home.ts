@@ -10,6 +10,7 @@ import { defineCustomElements } from '@vime/core/loader';
 defineCustomElements();
 import videojs from 'video.js';
 declare var Clappr: any;
+declare var shaka: any;
 
 @Component({
   selector: 'app-home',
@@ -22,14 +23,16 @@ declare var Clappr: any;
 export class Home implements OnInit, OnDestroy {
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
   @ViewChild('videoJSPlayer') videoJSPlayer!: ElementRef<HTMLVideoElement>;
+  @ViewChild('shakaPlayer') shakaPlayer!: ElementRef<HTMLVideoElement>;
   @ViewChild('clapprPlayerContainer') clapprPlayerContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('sportsCategoriesScrollContainer') sportsCategoriesScrollContainer!: ElementRef<HTMLDivElement>;
   private hlsInstance: Hls | null = null;
   private videoJSPlayerInstance: any = null;
   private clapprPlayerInstance: any = null;
+  private shakaPlayerInstance: any = null;
 
   // Player mode selector
-  playerMode: 'native' | 'vime' | 'videojs' | 'clappr' | 'iframe' = 'native';
+  playerMode: 'native' | 'shaka' | 'vime' | 'videojs' | 'clappr' | 'iframe' = 'native';
   // Channel list variables
   channels: any[] = [];
   loading = true;
@@ -101,6 +104,7 @@ export class Home implements OnInit, OnDestroy {
     this.destroyHls();
     this.destroyVideoJS();
     this.destroyClappr();
+    this.destroyShaka();
     if (this.queryParamsSub) {
       this.queryParamsSub.unsubscribe();
     }
@@ -323,8 +327,8 @@ export class Home implements OnInit, OnDestroy {
         }
 
         // Auto-conmutación si es DASH (.mpd)
-        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && this.playerMode === 'native') {
-          this.playerMode = 'videojs';
+        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && (this.playerMode === 'native' || this.playerMode === 'videojs')) {
+          this.playerMode = 'shaka';
         }
 
         this.applyPlayerMode();
@@ -367,8 +371,8 @@ export class Home implements OnInit, OnDestroy {
         this.videoUrl = finalUrl;
 
         // Auto-conmutación si es DASH (.mpd)
-        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && this.playerMode === 'native') {
-          this.playerMode = 'videojs';
+        if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml' && (this.playerMode === 'native' || this.playerMode === 'videojs')) {
+          this.playerMode = 'shaka';
         }
 
         this.applyPlayerMode();
@@ -485,7 +489,7 @@ export class Home implements OnInit, OnDestroy {
 
   onPlayerModeChange(event: Event) {
     const select = event.target as HTMLSelectElement;
-    this.playerMode = select.value as 'native' | 'vime' | 'videojs' | 'clappr' | 'iframe';
+    this.playerMode = select.value as 'native' | 'shaka' | 'vime' | 'videojs' | 'clappr' | 'iframe';
     
     if ((this.error || !this.videoUrl) && this.originalUrl) {
       this.error = null;
@@ -499,10 +503,13 @@ export class Home implements OnInit, OnDestroy {
     this.destroyHls();
     this.destroyVideoJS();
     this.destroyClappr();
+    this.destroyShaka();
     this.isIframe = (this.playerMode === 'iframe');
 
     if (this.playerMode === 'native') {
       this.loadNativeVideoAfterDelay();
+    } else if (this.playerMode === 'shaka') {
+      this.initShaka();
     } else if (this.playerMode === 'vime') {
       this.resolving = false;
       this.cdr.detectChanges();
@@ -620,6 +627,81 @@ export class Home implements OnInit, OnDestroy {
     }
   }
 
+  initShaka() {
+    this.destroyShaka();
+    const currentUrl = this.videoUrl;
+    if (!currentUrl) return;
+    this.resolving = true;
+    this.cdr.detectChanges();
+
+    setTimeout(() => {
+      if (!this.shakaPlayer) return;
+      const videoElement = this.shakaPlayer.nativeElement;
+      
+      try {
+        // Initialize Shaka Player
+        const player = new shaka.Player(videoElement);
+        this.shakaPlayerInstance = player;
+
+        // Configure ClearKey DRM if license_type=clearkey and license_key is present in the URL
+        const parsedUrl = new URL(currentUrl);
+        const licenseType = parsedUrl.searchParams.get('inputstream.adaptive.license_type') || parsedUrl.searchParams.get('license_type');
+        const licenseKeyStr = parsedUrl.searchParams.get('inputstream.adaptive.license_key') || parsedUrl.searchParams.get('license_key');
+
+        if (licenseType === 'clearkey' && licenseKeyStr) {
+          // Parse clearkey format: "key_id:key_val"
+          // E.g. "8ea235ce0826408b221c498115a9b62d:7aa9266ed91ea4510483370029dfcf45"
+          const parts = licenseKeyStr.split(':');
+          if (parts.length === 2) {
+            const keyIdHex = parts[0].trim();
+            const keyValHex = parts[1].trim();
+
+            const clearKeys: { [keyId: string]: string } = {};
+            clearKeys[keyIdHex] = keyValHex;
+
+            player.configure({
+              drm: {
+                clearKeys: clearKeys
+              }
+            });
+            console.log("Configured Shaka Player ClearKey DRM:", clearKeys);
+          }
+        }
+
+        player.addEventListener('error', (event: any) => {
+          console.error('Shaka player error:', event.detail);
+        });
+
+        player.load(currentUrl).then(() => {
+          this.resolving = false;
+          this.cdr.detectChanges();
+          videoElement.play().catch(err => console.log('Shaka autoplay blocked:', err));
+        }).catch((err: any) => {
+          console.error('Error loading stream in Shaka:', err);
+          this.resolving = false;
+          this.cdr.detectChanges();
+          this.setupIframeFallback(currentUrl);
+        });
+
+      } catch (e) {
+        console.error("Error initializing Shaka Player:", e);
+        this.resolving = false;
+        this.cdr.detectChanges();
+      }
+    }, 100);
+  }
+
+  destroyShaka() {
+    if (this.shakaPlayerInstance) {
+      try {
+        this.shakaPlayerInstance.destroy();
+      } catch (e) {
+        console.error("Error destroying Shaka player:", e);
+      }
+      this.shakaPlayerInstance = null;
+    }
+  }
+
   toggleIframeMode() {
     if (this.playerMode === 'iframe') {
       this.playerMode = 'native';
@@ -683,11 +765,11 @@ export class Home implements OnInit, OnDestroy {
     const video = this.videoPlayer.nativeElement;
     const url = this.videoUrl;
 
-    // Si es DASH (.mpd), el reproductor nativo no puede reproducirlo y causaría una descarga. Conmutamos a Video.js.
+    // Si es DASH (.mpd), el reproductor nativo no puede reproducirlo y causaría una descarga. Conmutamos a Shaka Player.
     if (this.getStreamType(url) === 'application/dash+xml') {
-      console.warn("DASH stream detected in native player. Auto-switching to Video.js.");
-      this.playerMode = 'videojs';
-      this.initVideoJS();
+      console.warn("DASH stream detected in native player. Auto-switching to Shaka Player.");
+      this.playerMode = 'shaka';
+      this.initShaka();
       return;
     }
 
