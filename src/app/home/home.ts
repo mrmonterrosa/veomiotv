@@ -259,8 +259,13 @@ export class Home implements OnInit, OnDestroy {
 
   isMpegTs(url: string): boolean {
     if (!url) return false;
-    const lower = url.toLowerCase();
-    return lower.includes('.ts') || lower.includes('/play/') || lower.includes('/live/');
+    try {
+      const decoded = decodeURIComponent(url).toLowerCase();
+      return decoded.includes('.ts') || decoded.includes('/play/') || decoded.includes('/live/');
+    } catch (e) {
+      const lower = url.toLowerCase();
+      return lower.includes('.ts') || lower.includes('/play/') || lower.includes('/live/') || lower.includes('%2fplay%2f') || lower.includes('%2flive%2f');
+    }
   }
 
   loadMpegTsScript(): Promise<void> {
