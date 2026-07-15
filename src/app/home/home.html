@@ -305,7 +305,7 @@
                                (vmError)="onPlayerError($event)" 
                                class="w-full h-full absolute inset-0 z-10" 
                                style="--vm-player-theme: #00daf3;">
-                        <vm-dash [version]="'latest'">
+                        <vm-dash [version]="'latest'" [config]="dashConfig">
                             <source [attr.data-src]="videoUrl" type="application/dash+xml" />
                         </vm-dash>
                         <vm-ui>

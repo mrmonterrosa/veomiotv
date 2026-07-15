@@ -49,6 +49,7 @@ export class Home implements OnInit, OnDestroy {
   isIframe = false;
   safeIframeUrl: SafeResourceUrl | null = null;
   originalUrl: string | null = null;
+  dashConfig: any = {};
 
   // Sidebar / UI state variables
   isSidebarCollapsed = false;
@@ -246,6 +247,36 @@ export class Home implements OnInit, OnDestroy {
     return 'application/x-mpegURL';
   }
 
+  setupDashConfig(url: string) {
+    try {
+      const parsedUrl = new URL(url);
+      const licenseType = parsedUrl.searchParams.get('inputstream.adaptive.license_type') || parsedUrl.searchParams.get('license_type');
+      const licenseKeyStr = parsedUrl.searchParams.get('inputstream.adaptive.license_key') || parsedUrl.searchParams.get('license_key');
+
+      if (licenseType === 'clearkey' && licenseKeyStr) {
+        const parts = licenseKeyStr.split(':');
+        if (parts.length === 2) {
+          const keyIdHex = parts[0].trim();
+          const keyValHex = parts[1].trim();
+
+          const clearKeys: { [keyId: string]: string } = {};
+          clearKeys[keyIdHex] = keyValHex;
+
+          this.dashConfig = {
+            protection: {
+              clearKeys: clearKeys
+            }
+          };
+          console.log("Configured Vime/Dash ClearKey DRM:", this.dashConfig);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing license key for Vime Dash:", e);
+    }
+    this.dashConfig = {};
+  }
+
   private shouldProxy(url: string): boolean {
     if (!url) return false;
     if (url.startsWith('http://')) return true;
@@ -326,9 +357,12 @@ export class Home implements OnInit, OnDestroy {
           this.videoUrl = embedUrl;
         }
 
-        // Auto-conmutación si es DASH (.mpd)
+        // Configuración si es DASH (.mpd)
         if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml') {
-          this.playerMode = 'shaka';
+          this.setupDashConfig(this.videoUrl);
+          if (this.playerMode !== 'vime' && this.playerMode !== 'shaka') {
+            this.playerMode = 'vime';
+          }
         } else if (this.playerMode === 'shaka') {
           this.playerMode = 'vime'; // Si era shaka pero ahora no es dash, cambiar a vime
         }
@@ -372,9 +406,12 @@ export class Home implements OnInit, OnDestroy {
 
         this.videoUrl = finalUrl;
 
-        // Auto-conmutación si es DASH (.mpd)
+        // Configuración si es DASH (.mpd)
         if (this.videoUrl && this.getStreamType(this.videoUrl) === 'application/dash+xml') {
-          this.playerMode = 'shaka';
+          this.setupDashConfig(this.videoUrl);
+          if (this.playerMode !== 'vime' && this.playerMode !== 'shaka') {
+            this.playerMode = 'vime';
+          }
         } else if (this.playerMode === 'shaka') {
           this.playerMode = 'vime'; // Si era shaka pero ahora no es dash, cambiar a vime
         }
